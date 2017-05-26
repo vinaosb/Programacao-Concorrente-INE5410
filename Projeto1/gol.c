@@ -149,9 +149,10 @@ void update_board ( cell_t ** board, cell_t ** newboard, int count, int i, int j
 	if (count < 2) newboard[i][j] = 0;
 	if (count > 3) newboard[i][j] = 0;
 }
+
 //seta o tabuleiro novo apois contar numero de celulas adjacentes a celula i,j do tabuleiro antigo
 void adjacent_to (cell_t ** board, cell_t ** newboard, int size, int i, int j) {
-	int	k, l, count=0;
+	int	c1, c2, c3, c4, r1, r2, k, l, count=0;
 
 	int sk = (i>0) ? i-1 : i;
 	int ek = (i+1 < size) ? i+1 : i;
@@ -159,14 +160,7 @@ void adjacent_to (cell_t ** board, cell_t ** newboard, int size, int i, int j) {
 	int el = (j+1 < size) ? j+1 : j;
 
 	if ((i>0)&&(i+1 < size)&&(j > 0)&&(j+1 < size)) {
-		count+= board[i-1][j-1];
-		count+= board[i-1][j]; 
-		count+= board[i-1][j+1]; 
-		count+= board[i][j-1];
-		count+= board[i][j+1];
-		count+= board[i+1][j-1];
-		count+= board[i+1][j];
-		count+= board[i+1][j+1];
+		count = board[i-1][j-1] + board[i-1][j] + board[i-1][j+1] + board[i][j-1] + board[i][j+1] + board[i+1][j-1] + board[i+1][j] + board[i+1][j+1];
 	} else {
   		for (k=sk; k<=ek; k++)
   			for (l=sl; l<=el; l++)
@@ -278,8 +272,8 @@ int main (int argc, char** argv) {
 	}
 
 	#ifdef RESULT
-	printf("Final:\n");
-	print (prev,size);
+	//printf("Final:\n");
+	//print (prev,size);
 	#endif
 
 	//libera memoria
