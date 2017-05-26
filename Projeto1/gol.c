@@ -143,6 +143,12 @@ void read_file (FILE * f, cell_t ** board, int size) {
 	string_to_board(board,size,s);
 }
 
+void update_board ( cell_t ** board, cell_t ** newboard, int count, int i, int j) {
+	if (count == 2) newboard[i][j] = board[i][j];
+	if (count == 3) newboard[i][j] = 1;
+	if (count < 2) newboard[i][j] = 0;
+	if (count > 3) newboard[i][j] = 0;
+}
 //seta o tabuleiro novo apois contar numero de celulas adjacentes a celula i,j do tabuleiro antigo
 void adjacent_to (cell_t ** board, cell_t ** newboard, int size, int i, int j) {
 	int	k, l, count=0;
@@ -167,11 +173,7 @@ void adjacent_to (cell_t ** board, cell_t ** newboard, int size, int i, int j) {
   				count+=board[k][l];
   		count-=board[i][j];
 	}
-	
-	if (count == 2) newboard[i][j] = board[i][j];
-	if (count == 3) newboard[i][j] = 1;
-	if (count < 2) newboard[i][j] = 0;
-	if (count > 3) newboard[i][j] = 0;
+	update_board(board, newboard, count, i, j);
 }
 //struct para passar de parametro para thread abaixo
 typedef struct {
@@ -220,11 +222,6 @@ void play (cell_t ** board, cell_t ** newboard, int size) {
 }
 
 int main (int argc, char** argv) {
-	//seta o numero maximo de threads
-	MAX_THREADS = argc > 1? atoi(argv[1]) : get_nprocs ();
-	if(MAX_THREADS <= 0)
-		MAX_THREADS = 1;
-
 	//declara variaveis
 	int size, steps, i;
 	cell_t ** tmp;
@@ -233,7 +230,14 @@ int main (int argc, char** argv) {
 	//inicializa variaveis;
 	f = stdin;
 	fscanf(f,"%d %d", &size, &steps);
-	
+
+	//seta o numero maximo de threads
+	MAX_THREADS = argc > 1? atoi(argv[1]) : get_nprocs ();
+	if(MAX_THREADS <= 0)
+		MAX_THREADS = 1;
+	if(MAX_THREADS > size*size)
+		MAX_THREADS = size*size;
+
 	//divisor de threads por linha e coluna
 	int temp = sqrt(MAX_THREADS);
 	int temp2 = temp;
