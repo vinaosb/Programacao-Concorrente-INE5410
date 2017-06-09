@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <mpi.h>
+
+unsigned int compute_pi(unsigned int, unsigned int);
+
+int main(int argc, char **argv){
+	int opt, rank, size;
+	unsigned int pontos;
+	unsigned int pontos_no_circulo;
+	unsigned int i;
+	MPI_Status st;
+	MPI_Init(&argc,&argv);
+	MPI_Comm_size(MPI_COMM_WORLD,&size);
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	int buffer1, buffer2[size];
+	MPI_Request request[size];
+	MPI_Status status[size];
+	
+	printf("Digite 1 para exercicio 1, 2 para exercicio 2 e qualquer outra coisa para sair");
+	scanf("%d",opt);
+	
+	switch(opt) {
+		case 1:
+			if (rank == 0) {
+				for (i = 1; i < size; i++) {
+					MPI_Isend(buffer2[i], 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+					MPI_Irecv(buffer2[i], 1, MPI_INT, i, 0, MPI_COMM_WORLD, &request[i]);
+				}
+				MPI_Wait(&request,&status);
+				for (i = 1; i < size; i++)
+					printf ("Processo %d concluido", buffer2[i]);
+			} else {
+				MPI_Recv(&buffer1, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status[rank]);
+				buffer1 = rank;
+				MPI_Send(&buffer1, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+			}
+		break;
+		case 2:
+			printf ("Digite quantos pontos para serem sorteados");
+			scanf("%d", pontos);
+
+			// retorna quantos pontos sorteados cairam dentro do circulo
+			// aqui estamos considerando uma semente para o gerador de 
+			// numeros aleatorios fixa = 0
+			if(rank == 0) {
+				for (i = 1; i < size; i++) {
+					MPI_Recv(buffer2[i], 1, MPI_INT, i, 0, MPI_COMM_WORLD, &st);
+					pontos_no_circulo += buffer2[i];
+				}
+			} else {
+				if (rank == size-1) {
+					buffer1 = compute_pi(0, (unsigned int *) ((pontos/size) + (pontos%size)));
+				} else {
+					buffer1 = compute_pi(0, (unsigned int *) ((pontos/size)));
+				}
+				MPI_Send(&buffer1, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+			}
+
+			// calcula a aproximacao de Pi baseado nos pontos sorteados
+			printf("Pi = %.040f\n", ((double)pontos_no_circulo/(double)pontos)*4);
+		break;
+		default:
+		break;
+	}
+
+	MPI_Finalize();
+	return 0;
+}
+
+unsigned int compute_pi(unsigned int seed, unsigned int pontos){
+	unsigned int i;
+	unsigned int pontos_no_circulo;
+	double x, y;
+
+	pontos_no_circulo = 0;
+	srand(seed);
+
+	for(i=0; i<pontos; i++){
+		// sorteia um ponto: coordenadas x e y dentro do quadrado
+		// consideramos que R = 1, então x e y pertencem ao intervalo [0; 1]
+		x = (double)rand()/(double)(RAND_MAX);
+		y = (double)rand()/(double)(RAND_MAX);      
+
+		// verifica se o ponto sorteado encontra-se dentro do circulo
+		// um ponto (x, y) esta dentro do circulo se: x^2 + y^2 < R^2
+		// nesse caso, consideramos R = 1
+		if( (x*x + y*y) < 1 ){
+			pontos_no_circulo++;
+		}
+	}
+  
+  return pontos_no_circulo;
+}
